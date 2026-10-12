@@ -1,0 +1,873 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GTS Space Station - Web Project Portal</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts: Press Start 2P & Orbitron & Outfit -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;800;900&family=Outfit:wght@400;600;700;800&family=Press+Start+2P&display=swap" rel="stylesheet">
+
+    <style>
+        body {
+            font-family: 'Outfit', sans-serif;
+            background-color: #0b0f19;
+            color: #f3f4f6;
+            overflow-x: hidden;
+        }
+
+        .font-orbitron {
+            font-family: 'Orbitron', sans-serif;
+        }
+
+        .font-arcade {
+            font-family: 'Press Start 2P', cursive;
+        }
+
+        /* Animated space canvas background styling */
+        #space-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            pointer-events: none;
+        }
+
+        /* Glassmorphism Card Style */
+        .glass-card {
+            background: rgba(17, 24, 39, 0.75);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .glass-card-hover {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .glass-card-hover:hover {
+            transform: translateY(-6px) scale(1.01);
+            border-color: rgba(56, 189, 248, 0.5);
+            box-shadow: 0 12px 30px -10px rgba(56, 189, 248, 0.3);
+        }
+
+        /* Neon Glow Effects */
+        .glow-cyan {
+            box-shadow: 0 0 20px rgba(6, 182, 212, 0.4);
+        }
+
+        .glow-purple {
+            box-shadow: 0 0 20px rgba(168, 85, 247, 0.4);
+        }
+
+        .glow-emerald {
+            box-shadow: 0 0 20px rgba(16, 185, 129, 0.4);
+        }
+
+        .glow-amber {
+            box-shadow: 0 0 20px rgba(245, 158, 11, 0.4);
+        }
+
+        /* Glowing text gradient animation */
+        .text-gradient {
+            background: linear-gradient(135deg, #38bdf8 0%, #a855f7 50%, #f43f5e 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .text-gradient-gold {
+            background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 50%, #d97706 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        /* Pulse Animations */
+        @keyframes pulse-slow {
+            0%, 100% { transform: scale(1); opacity: 0.9; }
+            50% { transform: scale(1.05); opacity: 1; }
+        }
+
+        .animate-pulse-slow {
+            animation: pulse-slow 3s infinite ease-in-out;
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0b0f19;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #1f2937;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #38bdf8;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col relative selection:bg-cyan-500 selection:text-black">
+
+    <canvas id="space-canvas"></canvas>
+
+    <header class="sticky top-0 z-50 bg-slate-900/80 backdrop-blur-md border-b border-slate-800 px-4 py-3 sm:px-8">
+        <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-4">
+            
+            <!-- Logo & Title -->
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-cyan-500 via-indigo-500 to-purple-600 flex items-center justify-center shadow-lg shadow-cyan-500/30 animate-pulse-slow">
+                    <i class="fa-solid fa-rocket text-white text-xl"></i>
+                </div>
+                <div>
+                    <h1 class="font-orbitron font-extrabold text-lg sm:text-xl tracking-wider text-white flex items-center gap-2">
+                        MISSION<span class="text-cyan-400">CONTROL</span>
+                        <span class="text-xs font-arcade bg-purple-900/80 text-purple-300 px-2 py-0.5 rounded-full border border-purple-500/40 hidden sm:inline-block">5TH GRADE</span>
+                    </h1>
+                    <p class="text-xs text-slate-400 hidden sm:block">Volume: Local_Data \\gtstfsrv01\users</p>
+                </div>
+            </div>
+
+            <!-- Header Quick Action: README & Audio Toggle -->
+            <div class="flex items-center space-x-3">
+                <!-- Sound Effects Toggle -->
+                <button id="sound-btn" onclick="toggleSound()" class="px-3 py-2 rounded-xl bg-slate-800/80 hover:bg-slate-700 border border-slate-700 text-slate-300 text-xs font-semibold flex items-center space-x-2 transition-all">
+                    <i id="sound-icon" class="fa-solid fa-volume-high text-cyan-400"></i>
+                    <span class="hidden md:inline">SFX: ON</span>
+                </button>
+
+                <!-- README Primary Button -->
+                <a href="README.md" onclick="playBeep()" class="group relative inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 font-orbitron text-xs sm:text-sm font-bold text-white shadow-lg shadow-emerald-500/25 hover:shadow-emerald-500/40 hover:scale-105 active:scale-95 transition-all duration-200 border border-emerald-400/30">
+                    <i class="fa-solid fa-book-bookmark group-hover:rotate-12 transition-transform"></i>
+                    <span>READ REPO DOCS</span>
+                    <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-mono bg-emerald-950/60 text-emerald-300">README.md</span>
+                </a>
+            </div>
+
+        </div>
+    </header>
+
+    <main class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-10">
+
+        <section class="relative rounded-3xl glass-card overflow-hidden p-6 sm:p-10 border border-slate-800 shadow-2xl">
+            <!-- Neon background glows -->
+            <div class="absolute -top-24 -left-24 w-72 h-72 bg-cyan-500/20 rounded-full blur-3xl pointer-events-none"></div>
+            <div class="absolute -bottom-24 -right-24 w-72 h-72 bg-purple-500/20 rounded-full blur-3xl pointer-events-none"></div>
+
+            <div class="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+                
+                <!-- Hero Intro Text -->
+                <div class="lg:col-span-7 space-y-4 text-center lg:text-left">
+                    <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-950/60 border border-cyan-500/30 text-cyan-400 text-xs font-mono">
+                        <span class="w-2 h-2 rounded-full bg-cyan-400 animate-ping"></span>
+                        SYSTEM READY • ALL SQUADRONS ONLINE
+                    </div>
+                    <h2 class="text-3xl sm:text-5xl font-orbitron font-black tracking-tight text-white leading-tight">
+                        EXPLORE THE <span class="text-gradient">CODE GALAXY</span>
+                    </h2>
+                    <p class="text-slate-300 text-base sm:text-lg max-w-2xl leading-relaxed">
+                        Welcome, Recruits! Dive into the 5th-grade web development projects. Choose your section below to launch student web apps, master builds, and team creations!
+                    </p>
+
+                    <!-- Quick Jump Links -->
+                    <div class="pt-2 flex flex-wrap justify-center lg:justify-start gap-2 sm:gap-3">
+                        <span class="text-xs font-bold text-slate-400 uppercase tracking-wider self-center mr-1">Quick Jump:</span>
+                        <a href="#section-baseline" onclick="playBeep()" class="px-3 py-1.5 rounded-lg bg-slate-800/90 hover:bg-slate-700 text-slate-300 text-xs font-bold border border-slate-700 hover:border-cyan-400 transition-all flex items-center gap-1.5">
+                            <i class="fa-solid fa-flag-checkered text-cyan-400"></i> Baseline
+                        </a>
+                        <a href="#section-bakely" onclick="playBeep()" class="px-3 py-1.5 rounded-lg bg-slate-800/90 hover:bg-slate-700 text-slate-300 text-xs font-bold border border-slate-700 hover:border-purple-400 transition-all flex items-center gap-1.5">
+                            <i class="fa-solid fa-cookie-bite text-purple-400"></i> Bakely
+                        </a>
+                        <a href="#section-dougherty" onclick="playBeep()" class="px-3 py-1.5 rounded-lg bg-slate-800/90 hover:bg-slate-700 text-slate-300 text-xs font-bold border border-slate-700 hover:border-emerald-400 transition-all flex items-center gap-1.5">
+                            <i class="fa-solid fa-atom text-emerald-400"></i> Dougherty-Grecco
+                        </a>
+                        <a href="#section-jones" onclick="playBeep()" class="px-3 py-1.5 rounded-lg bg-slate-800/90 hover:bg-slate-700 text-slate-300 text-xs font-bold border border-slate-700 hover:border-amber-400 transition-all flex items-center gap-1.5">
+                            <i class="fa-solid fa-bolt text-amber-400"></i> Jones
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Hero Stats Cards -->
+                <div class="lg:col-span-5 grid grid-cols-2 gap-4">
+                    <div class="p-4 rounded-2xl bg-slate-900/80 border border-slate-800 text-center hover:border-cyan-500/50 transition-colors">
+                        <div class="text-cyan-400 text-3xl font-orbitron font-extrabold mb-1" id="stat-total">19</div>
+                        <div class="text-xs text-slate-400 font-semibold uppercase tracking-wider">Web Apps</div>
+                    </div>
+                    <div class="p-4 rounded-2xl bg-slate-900/80 border border-slate-800 text-center hover:border-purple-500/50 transition-colors">
+                        <div class="text-purple-400 text-3xl font-orbitron font-extrabold mb-1">3</div>
+                        <div class="text-xs text-slate-400 font-semibold uppercase tracking-wider">Class Hubs</div>
+                    </div>
+                    <div class="p-4 rounded-2xl bg-slate-900/80 border border-slate-800 text-center hover:border-emerald-500/50 transition-colors">
+                        <div class="text-emerald-400 text-3xl font-orbitron font-extrabold mb-1">15</div>
+                        <div class="text-xs text-slate-400 font-semibold uppercase tracking-wider">Active Teams</div>
+                    </div>
+                    <div class="p-4 rounded-2xl bg-slate-900/80 border border-slate-800 text-center hover:border-amber-500/50 transition-colors">
+                        <div class="text-amber-400 text-3xl font-orbitron font-extrabold mb-1">100%</div>
+                        <div class="text-xs text-slate-400 font-semibold uppercase tracking-wider">Awesome</div>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+        <section class="sticky top-16 z-40 bg-slate-950/90 backdrop-blur-xl p-4 rounded-2xl border border-slate-800 shadow-xl">
+            <div class="flex flex-col md:flex-row items-center justify-between gap-4">
+                
+                <!-- Search Input Field -->
+                <div class="relative w-full md:w-96">
+                    <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                        <i class="fa-solid fa-magnifying-glass"></i>
+                    </div>
+                    <input type="text" id="search-input" onkeyup="filterCards()" placeholder="Search team, section, or baseline..." class="w-full pl-10 pr-10 py-2.5 rounded-xl bg-slate-900/90 border border-slate-700 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent text-sm transition-all">
+                    <button id="clear-search" onclick="clearSearch()" class="hidden absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-white">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
+
+                <!-- Filter Category Buttons -->
+                <div class="flex flex-wrap items-center gap-2 w-full md:w-auto justify-start md:justify-end text-xs font-semibold">
+                    <button onclick="setFilter('all')" class="filter-btn active px-3.5 py-2 rounded-xl bg-cyan-500 text-slate-950 font-bold border border-cyan-400 transition-all" data-filter="all">
+                        All Projects
+                    </button>
+                    <button onclick="setFilter('master')" class="filter-btn px-3.5 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-700 transition-all" data-filter="master">
+                        <i class="fa-solid fa-crown text-amber-400 mr-1"></i> Masters
+                    </button>
+                    <button onclick="setFilter('teams')" class="filter-btn px-3.5 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-700 transition-all" data-filter="teams">
+                        <i class="fa-solid fa-users text-purple-400 mr-1"></i> Teams Only
+                    </button>
+                </div>
+
+            </div>
+            <!-- Search status badge -->
+            <div id="search-status" class="mt-2 text-xs text-cyan-400 font-mono hidden">
+                Showing results matching search...
+            </div>
+        </section>
+
+        <section id="section-baseline" class="category-section space-y-4">
+            <div class="flex items-center space-x-3">
+                <div class="p-2 rounded-lg bg-cyan-500/10 border border-cyan-500/30 text-cyan-400">
+                    <i class="fa-solid fa-compass text-xl"></i>
+                </div>
+                <div>
+                    <h3 class="font-orbitron font-bold text-xl text-white">1Baseline Mission</h3>
+                    <p class="text-xs text-slate-400">Initial Project Setup & Starting Point</p>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- 1Baseline Card -->
+                <div class="project-card glass-card glass-card-hover rounded-2xl p-6 relative group border-cyan-500/30" data-category="baseline" data-type="master" data-keywords="1baseline baseline starting point template">
+                    <div class="flex items-start justify-between mb-4">
+                        <span class="px-2.5 py-1 rounded-md text-xs font-mono font-bold bg-cyan-500/20 text-cyan-300 border border-cyan-500/40">
+                            CORE TEMPLATE
+                        </span>
+                        <div class="w-10 h-10 rounded-full bg-cyan-950 flex items-center justify-center text-cyan-400 border border-cyan-500/30 group-hover:scale-110 transition-transform">
+                            <i class="fa-solid fa-code"></i>
+                        </div>
+                    </div>
+                    <h4 class="font-orbitron font-extrabold text-lg text-white mb-2 group-hover:text-cyan-300 transition-colors">1Baseline Index</h4>
+                    <p class="text-slate-400 text-xs mb-6 leading-relaxed">
+                        The baseline foundational project that serves as the blueprint for all class teams.
+                    </p>
+                    <a href="1Baseline/index.html" onclick="playBeep()" class="w-full py-2.5 px-4 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-slate-950 font-bold text-xs uppercase tracking-wider font-orbitron flex items-center justify-center space-x-2 shadow-lg shadow-cyan-500/20 transition-all">
+                        <span>LAUNCH BASELINE</span>
+                        <i class="fa-solid fa-arrow-right"></i>
+                    </a>
+                </div>
+            </div>
+        </section>
+
+        <section id="section-bakely" class="category-section space-y-4 pt-4">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                <div class="flex items-center space-x-3">
+                    <div class="p-2.5 rounded-xl bg-purple-500/10 border border-purple-500/30 text-purple-400">
+                        <i class="fa-solid fa-graduation-cap text-2xl"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-orbitron font-extrabold text-2xl text-white flex items-center gap-2">
+                            BAKELY CLASS <span class="text-xs font-mono px-2 py-0.5 rounded bg-purple-950 text-purple-300 border border-purple-500/40">6 PROJECTS</span>
+                        </h3>
+                        <p class="text-xs text-slate-400">Class Hub Directory for Mrs. Bakely's Teams</p>
+                    </div>
+                </div>
+                <span class="text-xs font-mono text-purple-400/80 hidden sm:inline-block">\Bakely\*</span>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- Master Card -->
+                <div class="project-card glass-card glass-card-hover rounded-2xl p-6 border-purple-500/40 relative group" data-category="bakely" data-type="master" data-keywords="bakely master teacher main index">
+                    <div class="absolute top-0 right-0 transform translate-x-1 -translate-y-1">
+                        <span class="flex h-3 w-3">
+                          <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+                          <span class="relative inline-flex rounded-full h-3 w-3 bg-amber-500"></span>
+                        </span>
+                    </div>
+                    <div class="flex items-start justify-between mb-4">
+                        <span class="px-2.5 py-1 rounded-md text-xs font-mono font-bold bg-amber-500/20 text-amber-300 border border-amber-500/40 flex items-center gap-1">
+                            <i class="fa-solid fa-crown text-amber-400"></i> MASTER BUILD
+                        </span>
+                        <div class="w-10 h-10 rounded-full bg-purple-950 flex items-center justify-center text-purple-400 border border-purple-500/30 group-hover:scale-110 transition-transform">
+                            <i class="fa-solid fa-star"></i>
+                        </div>
+                    </div>
+                    <h4 class="font-orbitron font-extrabold text-lg text-white mb-2 group-hover:text-purple-300 transition-colors">Bakely Master</h4>
+                    <p class="text-slate-400 text-xs mb-6">Central master build for all team projects under Bakely class.</p>
+                    <a href="Bakely/Master/index.html" onclick="playBeep()" class="w-full py-2.5 px-4 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs uppercase tracking-wider font-orbitron flex items-center justify-center space-x-2 shadow-lg shadow-purple-600/30 transition-all">
+                        <span>OPEN MASTER</span>
+                        <i class="fa-solid fa-external-link-alt text-xs"></i>
+                    </a>
+                </div>
+
+                <!-- Teams 1 to 5 -->
+                <!-- Team 1 -->
+                <div class="project-card glass-card glass-card-hover rounded-2xl p-6 relative group" data-category="bakely" data-type="teams" data-keywords="bakely team1 team 1">
+                    <div class="flex items-start justify-between mb-4">
+                        <span class="px-2.5 py-1 rounded-md text-xs font-mono font-bold bg-slate-800 text-slate-300 border border-slate-700">TEAM 01</span>
+                        <div class="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center text-cyan-400 group-hover:scale-110 transition-transform">
+                            <i class="fa-solid fa-user-astronaut"></i>
+                        </div>
+                    </div>
+                    <h4 class="font-orbitron font-bold text-lg text-white mb-1">Bakely Team 1</h4>
+                    <p class="text-slate-400 text-xs mb-6">Interactive 5th-grade team website project.</p>
+                    <a href="Bakely/Team1/index.html" onclick="playBeep()" class="w-full py-2 px-4 rounded-xl bg-slate-800 hover:bg-cyan-500 hover:text-slate-950 text-slate-200 font-bold text-xs uppercase font-orbitron flex items-center justify-center space-x-2 border border-slate-700 transition-all">
+                        <span>VIEW TEAM 1</span>
+                        <i class="fa-solid fa-arrow-right text-xs"></i>
+                    </a>
+                </div>
+
+                <!-- Team 2 -->
+                <div class="project-card glass-card glass-card-hover rounded-2xl p-6 relative group" data-category="bakely" data-type="teams" data-keywords="bakely team2 team 2">
+                    <div class="flex items-start justify-between mb-4">
+                        <span class="px-2.5 py-1 rounded-md text-xs font-mono font-bold bg-slate-800 text-slate-300 border border-slate-700">TEAM 02</span>
+                        <div class="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center text-purple-400 group-hover:scale-110 transition-transform">
+                            <i class="fa-solid fa-user-astronaut"></i>
+                        </div>
+                    </div>
+                    <h4 class="font-orbitron font-bold text-lg text-white mb-1">Bakely Team 2</h4>
+                    <p class="text-slate-400 text-xs mb-6">Interactive 5th-grade team website project.</p>
+                    <a href="Bakely/Team2/index.html" onclick="playBeep()" class="w-full py-2 px-4 rounded-xl bg-slate-800 hover:bg-purple-500 hover:text-white text-slate-200 font-bold text-xs uppercase font-orbitron flex items-center justify-center space-x-2 border border-slate-700 transition-all">
+                        <span>VIEW TEAM 2</span>
+                        <i class="fa-solid fa-arrow-right text-xs"></i>
+                    </a>
+                </div>
+
+                <!-- Team 3 -->
+                <div class="project-card glass-card glass-card-hover rounded-2xl p-6 relative group" data-category="bakely" data-type="teams" data-keywords="bakely team3 team 3">
+                    <div class="flex items-start justify-between mb-4">
+                        <span class="px-2.5 py-1 rounded-md text-xs font-mono font-bold bg-slate-800 text-slate-300 border border-slate-700">TEAM 03</span>
+                        <div class="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center text-pink-400 group-hover:scale-110 transition-transform">
+                            <i class="fa-solid fa-user-astronaut"></i>
+                        </div>
+                    </div>
+                    <h4 class="font-orbitron font-bold text-lg text-white mb-1">Bakely Team 3</h4>
+                    <p class="text-slate-400 text-xs mb-6">Interactive 5th-grade team website project.</p>
+                    <a href="Bakely/Team3/index.html" onclick="playBeep()" class="w-full py-2 px-4 rounded-xl bg-slate-800 hover:bg-pink-500 hover:text-white text-slate-200 font-bold text-xs uppercase font-orbitron flex items-center justify-center space-x-2 border border-slate-700 transition-all">
+                        <span>VIEW TEAM 3</span>
+                        <i class="fa-solid fa-arrow-right text-xs"></i>
+                    </a>
+                </div>
+
+                <!-- Team 4 -->
+                <div class="project-card glass-card glass-card-hover rounded-2xl p-6 relative group" data-category="bakely" data-type="teams" data-keywords="bakely team4 team 4">
+                    <div class="flex items-start justify-between mb-4">
+                        <span class="px-2.5 py-1 rounded-md text-xs font-mono font-bold bg-slate-800 text-slate-300 border border-slate-700">TEAM 04</span>
+                        <div class="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center text-emerald-400 group-hover:scale-110 transition-transform">
+                            <i class="fa-solid fa-user-astronaut"></i>
+                        </div>
+                    </div>
+                    <h4 class="font-orbitron font-bold text-lg text-white mb-1">Bakely Team 4</h4>
+                    <p class="text-slate-400 text-xs mb-6">Interactive 5th-grade team website project.</p>
+                    <a href="Bakely/Team4/index.html" onclick="playBeep()" class="w-full py-2 px-4 rounded-xl bg-slate-800 hover:bg-emerald-500 hover:text-slate-950 text-slate-200 font-bold text-xs uppercase font-orbitron flex items-center justify-center space-x-2 border border-slate-700 transition-all">
+                        <span>VIEW TEAM 4</span>
+                        <i class="fa-solid fa-arrow-right text-xs"></i>
+                    </a>
+                </div>
+
+                <!-- Team 5 -->
+                <div class="project-card glass-card glass-card-hover rounded-2xl p-6 relative group" data-category="bakely" data-type="teams" data-keywords="bakely team5 team 5">
+                    <div class="flex items-start justify-between mb-4">
+                        <span class="px-2.5 py-1 rounded-md text-xs font-mono font-bold bg-slate-800 text-slate-300 border border-slate-700">TEAM 05</span>
+                        <div class="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center text-amber-400 group-hover:scale-110 transition-transform">
+                            <i class="fa-solid fa-user-astronaut"></i>
+                        </div>
+                    </div>
+                    <h4 class="font-orbitron font-bold text-lg text-white mb-1">Bakely Team 5</h4>
+                    <p class="text-slate-400 text-xs mb-6">Interactive 5th-grade team website project.</p>
+                    <a href="Bakely/Team5/index.html" onclick="playBeep()" class="w-full py-2 px-4 rounded-xl bg-slate-800 hover:bg-amber-500 hover:text-slate-950 text-slate-200 font-bold text-xs uppercase font-orbitron flex items-center justify-center space-x-2 border border-slate-700 transition-all">
+                        <span>VIEW TEAM 5</span>
+                        <i class="fa-solid fa-arrow-right text-xs"></i>
+                    </a>
+                </div>
+            </div>
+        </section>
+
+        <section id="section-dougherty" class="category-section space-y-4 pt-6">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                <div class="flex items-center space-x-3">
+                    <div class="p-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400">
+                        <i class="fa-solid fa-flask text-2xl"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-orbitron font-extrabold text-2xl text-white flex items-center gap-2">
+                            DOUGHERTY-GRECCO CLASS <span class="text-xs font-mono px-2 py-0.5 rounded bg-emerald-950 text-emerald-300 border border-emerald-500/40">6 PROJECTS</span>
+                        </h3>
+                        <p class="text-xs text-slate-400">Class Hub Directory for Dougherty-Grecco Teams</p>
+                    </div>
+                </div>
+                <span class="text-xs font-mono text-emerald-400/80 hidden sm:inline-block">\Dougherty-Grecco\*</span>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- Master Card -->
+                <div class="project-card glass-card glass-card-hover rounded-2xl p-6 border-emerald-500/40 relative group" data-category="dougherty" data-type="master" data-keywords="dougherty grecco master teacher main index">
+                    <div class="flex items-start justify-between mb-4">
+                        <span class="px-2.5 py-1 rounded-md text-xs font-mono font-bold bg-amber-500/20 text-amber-300 border border-amber-500/40 flex items-center gap-1">
+                            <i class="fa-solid fa-crown text-amber-400"></i> MASTER BUILD
+                        </span>
+                        <div class="w-10 h-10 rounded-full bg-emerald-950 flex items-center justify-center text-emerald-400 border border-emerald-500/30 group-hover:scale-110 transition-transform">
+                            <i class="fa-solid fa-star"></i>
+                        </div>
+                    </div>
+                    <h4 class="font-orbitron font-extrabold text-lg text-white mb-2 group-hover:text-emerald-300 transition-colors">Dougherty-Grecco Master</h4>
+                    <p class="text-slate-400 text-xs mb-6">Central master build for all team projects under Dougherty-Grecco class.</p>
+                    <a href="Dougherty-Grecco/Master/index.html" onclick="playBeep()" class="w-full py-2.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-slate-950 font-bold text-xs uppercase tracking-wider font-orbitron flex items-center justify-center space-x-2 shadow-lg shadow-emerald-600/30 transition-all">
+                        <span>OPEN MASTER</span>
+                        <i class="fa-solid fa-external-link-alt text-xs"></i>
+                    </a>
+                </div>
+
+                <!-- Teams 1 to 5 -->
+                <!-- Team 1 -->
+                <div class="project-card glass-card glass-card-hover rounded-2xl p-6 relative group" data-category="dougherty" data-type="teams" data-keywords="dougherty grecco team1 team 1">
+                    <div class="flex items-start justify-between mb-4">
+                        <span class="px-2.5 py-1 rounded-md text-xs font-mono font-bold bg-slate-800 text-slate-300 border border-slate-700">TEAM 01</span>
+                        <div class="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center text-emerald-400 group-hover:scale-110 transition-transform">
+                            <i class="fa-solid fa-robot"></i>
+                        </div>
+                    </div>
+                    <h4 class="font-orbitron font-bold text-lg text-white mb-1">Dougherty-Grecco T1</h4>
+                    <p class="text-slate-400 text-xs mb-6">Interactive 5th-grade team website project.</p>
+                    <a href="Dougherty-Grecco/Team1/index.html" onclick="playBeep()" class="w-full py-2 px-4 rounded-xl bg-slate-800 hover:bg-emerald-500 hover:text-slate-950 text-slate-200 font-bold text-xs uppercase font-orbitron flex items-center justify-center space-x-2 border border-slate-700 transition-all">
+                        <span>VIEW TEAM 1</span>
+                        <i class="fa-solid fa-arrow-right text-xs"></i>
+                    </a>
+                </div>
+
+                <!-- Team 2 -->
+                <div class="project-card glass-card glass-card-hover rounded-2xl p-6 relative group" data-category="dougherty" data-type="teams" data-keywords="dougherty grecco team2 team 2">
+                    <div class="flex items-start justify-between mb-4">
+                        <span class="px-2.5 py-1 rounded-md text-xs font-mono font-bold bg-slate-800 text-slate-300 border border-slate-700">TEAM 02</span>
+                        <div class="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center text-teal-400 group-hover:scale-110 transition-transform">
+                            <i class="fa-solid fa-robot"></i>
+                        </div>
+                    </div>
+                    <h4 class="font-orbitron font-bold text-lg text-white mb-1">Dougherty-Grecco T2</h4>
+                    <p class="text-slate-400 text-xs mb-6">Interactive 5th-grade team website project.</p>
+                    <a href="Dougherty-Grecco/Team2/index.html" onclick="playBeep()" class="w-full py-2 px-4 rounded-xl bg-slate-800 hover:bg-teal-500 hover:text-slate-950 text-slate-200 font-bold text-xs uppercase font-orbitron flex items-center justify-center space-x-2 border border-slate-700 transition-all">
+                        <span>VIEW TEAM 2</span>
+                        <i class="fa-solid fa-arrow-right text-xs"></i>
+                    </a>
+                </div>
+
+                <!-- Team 3 -->
+                <div class="project-card glass-card glass-card-hover rounded-2xl p-6 relative group" data-category="dougherty" data-type="teams" data-keywords="dougherty grecco team3 team 3">
+                    <div class="flex items-start justify-between mb-4">
+                        <span class="px-2.5 py-1 rounded-md text-xs font-mono font-bold bg-slate-800 text-slate-300 border border-slate-700">TEAM 03</span>
+                        <div class="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center text-cyan-400 group-hover:scale-110 transition-transform">
+                            <i class="fa-solid fa-robot"></i>
+                        </div>
+                    </div>
+                    <h4 class="font-orbitron font-bold text-lg text-white mb-1">Dougherty-Grecco T3</h4>
+                    <p class="text-slate-400 text-xs mb-6">Interactive 5th-grade team website project.</p>
+                    <a href="Dougherty-Grecco/Team3/index.html" onclick="playBeep()" class="w-full py-2 px-4 rounded-xl bg-slate-800 hover:bg-cyan-500 hover:text-slate-950 text-slate-200 font-bold text-xs uppercase font-orbitron flex items-center justify-center space-x-2 border border-slate-700 transition-all">
+                        <span>VIEW TEAM 3</span>
+                        <i class="fa-solid fa-arrow-right text-xs"></i>
+                    </a>
+                </div>
+
+                <!-- Team 4 -->
+                <div class="project-card glass-card glass-card-hover rounded-2xl p-6 relative group" data-category="dougherty" data-type="teams" data-keywords="dougherty grecco team4 team 4">
+                    <div class="flex items-start justify-between mb-4">
+                        <span class="px-2.5 py-1 rounded-md text-xs font-mono font-bold bg-slate-800 text-slate-300 border border-slate-700">TEAM 04</span>
+                        <div class="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center text-indigo-400 group-hover:scale-110 transition-transform">
+                            <i class="fa-solid fa-robot"></i>
+                        </div>
+                    </div>
+                    <h4 class="font-orbitron font-bold text-lg text-white mb-1">Dougherty-Grecco T4</h4>
+                    <p class="text-slate-400 text-xs mb-6">Interactive 5th-grade team website project.</p>
+                    <a href="Dougherty-Grecco/Team4/index.html" onclick="playBeep()" class="w-full py-2 px-4 rounded-xl bg-slate-800 hover:bg-indigo-500 hover:text-white text-slate-200 font-bold text-xs uppercase font-orbitron flex items-center justify-center space-x-2 border border-slate-700 transition-all">
+                        <span>VIEW TEAM 4</span>
+                        <i class="fa-solid fa-arrow-right text-xs"></i>
+                    </a>
+                </div>
+
+                <!-- Team 5 -->
+                <div class="project-card glass-card glass-card-hover rounded-2xl p-6 relative group" data-category="dougherty" data-type="teams" data-keywords="dougherty grecco team5 team 5">
+                    <div class="flex items-start justify-between mb-4">
+                        <span class="px-2.5 py-1 rounded-md text-xs font-mono font-bold bg-slate-800 text-slate-300 border border-slate-700">TEAM 05</span>
+                        <div class="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center text-violet-400 group-hover:scale-110 transition-transform">
+                            <i class="fa-solid fa-robot"></i>
+                        </div>
+                    </div>
+                    <h4 class="font-orbitron font-bold text-lg text-white mb-1">Dougherty-Grecco T5</h4>
+                    <p class="text-slate-400 text-xs mb-6">Interactive 5th-grade team website project.</p>
+                    <a href="Dougherty-Grecco/Team5/index.html" onclick="playBeep()" class="w-full py-2 px-4 rounded-xl bg-slate-800 hover:bg-violet-500 hover:text-white text-slate-200 font-bold text-xs uppercase font-orbitron flex items-center justify-center space-x-2 border border-slate-700 transition-all">
+                        <span>VIEW TEAM 5</span>
+                        <i class="fa-solid fa-arrow-right text-xs"></i>
+                    </a>
+                </div>
+            </div>
+        </section>
+
+        <section id="section-jones" class="category-section space-y-4 pt-6">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                <div class="flex items-center space-x-3">
+                    <div class="p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-400">
+                        <i class="fa-solid fa-gamepad text-2xl"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-orbitron font-extrabold text-2xl text-white flex items-center gap-2">
+                            JONES CLASS <span class="text-xs font-mono px-2 py-0.5 rounded bg-amber-950 text-amber-300 border border-amber-500/40">6 PROJECTS</span>
+                        </h3>
+                        <p class="text-xs text-slate-400">Class Hub Directory for Mr. Jones' Teams</p>
+                    </div>
+                </div>
+                <span class="text-xs font-mono text-amber-400/80 hidden sm:inline-block">\Jones\*</span>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- Master Card -->
+                <div class="project-card glass-card glass-card-hover rounded-2xl p-6 border-amber-500/40 relative group" data-category="jones" data-type="master" data-keywords="jones master teacher main index">
+                    <div class="flex items-start justify-between mb-4">
+                        <span class="px-2.5 py-1 rounded-md text-xs font-mono font-bold bg-amber-500/20 text-amber-300 border border-amber-500/40 flex items-center gap-1">
+                            <i class="fa-solid fa-crown text-amber-400"></i> MASTER BUILD
+                        </span>
+                        <div class="w-10 h-10 rounded-full bg-amber-950 flex items-center justify-center text-amber-400 border border-amber-500/30 group-hover:scale-110 transition-transform">
+                            <i class="fa-solid fa-star"></i>
+                        </div>
+                    </div>
+                    <h4 class="font-orbitron font-extrabold text-lg text-white mb-2 group-hover:text-amber-300 transition-colors">Jones Master</h4>
+                    <p class="text-slate-400 text-xs mb-6">Central master build for all team projects under Jones class.</p>
+                    <a href="Jones/Master/index.html" onclick="playBeep()" class="w-full py-2.5 px-4 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs uppercase tracking-wider font-orbitron flex items-center justify-center space-x-2 shadow-lg shadow-amber-500/30 transition-all">
+                        <span>OPEN MASTER</span>
+                        <i class="fa-solid fa-external-link-alt text-xs"></i>
+                    </a>
+                </div>
+
+                <!-- Teams 1 to 5 -->
+                <!-- Team 1 -->
+                <div class="project-card glass-card glass-card-hover rounded-2xl p-6 relative group" data-category="jones" data-type="teams" data-keywords="jones team1 team 1">
+                    <div class="flex items-start justify-between mb-4">
+                        <span class="px-2.5 py-1 rounded-md text-xs font-mono font-bold bg-slate-800 text-slate-300 border border-slate-700">TEAM 01</span>
+                        <div class="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center text-amber-400 group-hover:scale-110 transition-transform">
+                            <i class="fa-solid fa-meteor"></i>
+                        </div>
+                    </div>
+                    <h4 class="font-orbitron font-bold text-lg text-white mb-1">Jones Team 1</h4>
+                    <p class="text-slate-400 text-xs mb-6">Interactive 5th-grade team website project.</p>
+                    <a href="Jones/Team1/index.html" onclick="playBeep()" class="w-full py-2 px-4 rounded-xl bg-slate-800 hover:bg-amber-500 hover:text-slate-950 text-slate-200 font-bold text-xs uppercase font-orbitron flex items-center justify-center space-x-2 border border-slate-700 transition-all">
+                        <span>VIEW TEAM 1</span>
+                        <i class="fa-solid fa-arrow-right text-xs"></i>
+                    </a>
+                </div>
+
+                <!-- Team 2 -->
+                <div class="project-card glass-card glass-card-hover rounded-2xl p-6 relative group" data-category="jones" data-type="teams" data-keywords="jones team2 team 2">
+                    <div class="flex items-start justify-between mb-4">
+                        <span class="px-2.5 py-1 rounded-md text-xs font-mono font-bold bg-slate-800 text-slate-300 border border-slate-700">TEAM 02</span>
+                        <div class="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center text-orange-400 group-hover:scale-110 transition-transform">
+                            <i class="fa-solid fa-meteor"></i>
+                        </div>
+                    </div>
+                    <h4 class="font-orbitron font-bold text-lg text-white mb-1">Jones Team 2</h4>
+                    <p class="text-slate-400 text-xs mb-6">Interactive 5th-grade team website project.</p>
+                    <a href="Jones/Team2/index.html" onclick="playBeep()" class="w-full py-2 px-4 rounded-xl bg-slate-800 hover:bg-orange-500 hover:text-slate-950 text-slate-200 font-bold text-xs uppercase font-orbitron flex items-center justify-center space-x-2 border border-slate-700 transition-all">
+                        <span>VIEW TEAM 2</span>
+                        <i class="fa-solid fa-arrow-right text-xs"></i>
+                    </a>
+                </div>
+
+                <!-- Team 3 -->
+                <div class="project-card glass-card glass-card-hover rounded-2xl p-6 relative group" data-category="jones" data-type="teams" data-keywords="jones team3 team 3">
+                    <div class="flex items-start justify-between mb-4">
+                        <span class="px-2.5 py-1 rounded-md text-xs font-mono font-bold bg-slate-800 text-slate-300 border border-slate-700">TEAM 03</span>
+                        <div class="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center text-red-400 group-hover:scale-110 transition-transform">
+                            <i class="fa-solid fa-meteor"></i>
+                        </div>
+                    </div>
+                    <h4 class="font-orbitron font-bold text-lg text-white mb-1">Jones Team 3</h4>
+                    <p class="text-slate-400 text-xs mb-6">Interactive 5th-grade team website project.</p>
+                    <a href="Jones/Team3/index.html" onclick="playBeep()" class="w-full py-2 px-4 rounded-xl bg-slate-800 hover:bg-red-500 hover:text-white text-slate-200 font-bold text-xs uppercase font-orbitron flex items-center justify-center space-x-2 border border-slate-700 transition-all">
+                        <span>VIEW TEAM 3</span>
+                        <i class="fa-solid fa-arrow-right text-xs"></i>
+                    </a>
+                </div>
+
+                <!-- Team 4 -->
+                <div class="project-card glass-card glass-card-hover rounded-2xl p-6 relative group" data-category="jones" data-type="teams" data-keywords="jones team4 team 4">
+                    <div class="flex items-start justify-between mb-4">
+                        <span class="px-2.5 py-1 rounded-md text-xs font-mono font-bold bg-slate-800 text-slate-300 border border-slate-700">TEAM 04</span>
+                        <div class="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center text-yellow-400 group-hover:scale-110 transition-transform">
+                            <i class="fa-solid fa-meteor"></i>
+                        </div>
+                    </div>
+                    <h4 class="font-orbitron font-bold text-lg text-white mb-1">Jones Team 4</h4>
+                    <p class="text-slate-400 text-xs mb-6">Interactive 5th-grade team website project.</p>
+                    <a href="Jones/Team4/index.html" onclick="playBeep()" class="w-full py-2 px-4 rounded-xl bg-slate-800 hover:bg-yellow-500 hover:text-slate-950 text-slate-200 font-bold text-xs uppercase font-orbitron flex items-center justify-center space-x-2 border border-slate-700 transition-all">
+                        <span>VIEW TEAM 4</span>
+                        <i class="fa-solid fa-arrow-right text-xs"></i>
+                    </a>
+                </div>
+
+                <!-- Team 5 -->
+                <div class="project-card glass-card glass-card-hover rounded-2xl p-6 relative group" data-category="jones" data-type="teams" data-keywords="jones team5 team 5">
+                    <div class="flex items-start justify-between mb-4">
+                        <span class="px-2.5 py-1 rounded-md text-xs font-mono font-bold bg-slate-800 text-slate-300 border border-slate-700">TEAM 05</span>
+                        <div class="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center text-lime-400 group-hover:scale-110 transition-transform">
+                            <i class="fa-solid fa-meteor"></i>
+                        </div>
+                    </div>
+                    <h4 class="font-orbitron font-bold text-lg text-white mb-1">Jones Team 5</h4>
+                    <p class="text-slate-400 text-xs mb-6">Interactive 5th-grade team website project.</p>
+                    <a href="Jones/Team5/index.html" onclick="playBeep()" class="w-full py-2 px-4 rounded-xl bg-slate-800 hover:bg-lime-500 hover:text-slate-950 text-slate-200 font-bold text-xs uppercase font-orbitron flex items-center justify-center space-x-2 border border-slate-700 transition-all">
+                        <span>VIEW TEAM 5</span>
+                        <i class="fa-solid fa-arrow-right text-xs"></i>
+                    </a>
+                </div>
+            </div>
+        </section>
+
+        <!-- No Results Fallback Card -->
+        <div id="no-results" class="hidden p-12 text-center glass-card rounded-2xl border border-slate-800 space-y-4">
+            <div class="w-16 h-16 mx-auto rounded-full bg-slate-800 flex items-center justify-center text-slate-400 text-2xl">
+                <i class="fa-solid fa-radar"></i>
+            </div>
+            <h4 class="text-xl font-orbitron font-bold text-white">No Projects Found</h4>
+            <p class="text-slate-400 text-sm max-w-md mx-auto">We couldn't find any team or section matching your search query. Try clearing filters or searching for team numbers like "Team 1".</p>
+            <button onclick="clearSearch()" class="px-4 py-2 bg-cyan-500 text-slate-950 font-bold rounded-xl text-xs font-orbitron hover:bg-cyan-400 transition-all">
+                RESET SEARCH
+            </button>
+        </div>
+
+    </main>
+
+    <footer class="mt-16 border-t border-slate-800 bg-slate-950/80 py-8 px-4 text-center">
+        <div class="max-w-7xl mx-auto space-y-3">
+            <div class="flex items-center justify-center space-x-2 text-cyan-400 text-sm font-orbitron">
+                <i class="fa-solid fa-shield-halved"></i>
+                <span>GTS CLASSROOM REPOSITORY PORTAL</span>
+            </div>
+            <p class="text-xs text-slate-500 font-mono">
+                Volume: Local_Data (2EAE-C6CA) • Hosted on \\gtstfsrv01\users
+            </p>
+            <p class="text-xs text-slate-400">
+                Created for 5th Grade Web Developers & Explorers 🚀
+            </p>
+        </div>
+    </footer>
+
+    <script>
+        // --- Starfield Particle Animation Engine ---
+        const canvas = document.getElementById('space-canvas');
+        const ctx = canvas.getContext('2d');
+
+        let stars = [];
+        const STAR_COUNT = 100;
+
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            initStars();
+        }
+
+        function initStars() {
+            stars = [];
+            for (let i = 0; i < STAR_COUNT; i++) {
+                stars.push({
+                    x: Math.random() * canvas.width,
+                    y: Math.random() * canvas.height,
+                    size: Math.random() * 2,
+                    color: ['#38bdf8', '#a855f7', '#34d399', '#fbbf24', '#ffffff'][Math.floor(Math.random() * 5)],
+                    alpha: Math.random(),
+                    speed: Math.random() * 0.02 + 0.005
+                });
+            }
+        }
+
+        function drawStars() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            stars.forEach(star => {
+                star.alpha += star.speed;
+                if (star.alpha > 1 || star.alpha < 0) {
+                    star.speed = -star.speed;
+                }
+
+                ctx.save();
+                ctx.globalAlpha = Math.abs(star.alpha);
+                ctx.fillStyle = star.color;
+                ctx.beginPath();
+                ctx.arc(star.x, star.y, star.size, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.restore();
+            });
+
+            requestAnimationFrame(drawStars);
+        }
+
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+        drawStars();
+
+        // --- Web Audio API Synthesizer for Fun Arcade Sound Effects ---
+        let soundEnabled = true;
+        let audioCtx = null;
+
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+        }
+
+        function toggleSound() {
+            soundEnabled = !soundEnabled;
+            const btn = document.getElementById('sound-btn');
+            const icon = document.getElementById('sound-icon');
+
+            if (soundEnabled) {
+                btn.classList.replace('text-slate-500', 'text-slate-300');
+                icon.className = "fa-solid fa-volume-high text-cyan-400";
+                btn.querySelector('span').textContent = "SFX: ON";
+                playBeep(600, 0.05);
+            } else {
+                btn.classList.replace('text-slate-300', 'text-slate-500');
+                icon.className = "fa-solid fa-volume-xmark text-slate-500";
+                btn.querySelector('span').textContent = "SFX: OFF";
+            }
+        }
+
+        function playBeep(freq = 520, duration = 0.08) {
+            if (!soundEnabled) return;
+            try {
+                initAudio();
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(freq * 1.5, audioCtx.currentTime + duration);
+
+                gain.gain.setValueAtTime(0.08, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+
+                osc.start();
+                osc.stop(audioCtx.currentTime + duration);
+            } catch (e) {
+                // Ignore audio restriction errors
+            }
+        }
+
+        let currentFilter = 'all';
+
+        function setFilter(type) {
+            currentFilter = type;
+            playBeep(440, 0.05);
+
+            // Update UI buttons state
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                if (btn.dataset.filter === type) {
+                    btn.classList.remove('bg-slate-900', 'text-slate-300', 'border-slate-700');
+                    btn.classList.add('bg-cyan-500', 'text-slate-950', 'font-bold', 'border-cyan-400');
+                } else {
+                    btn.classList.remove('bg-cyan-500', 'text-slate-950', 'font-bold', 'border-cyan-400');
+                    btn.classList.add('bg-slate-900', 'text-slate-300', 'border-slate-700');
+                }
+            });
+
+            applyFilters();
+        }
+
+        function filterCards() {
+            const clearBtn = document.getElementById('clear-search');
+            const searchVal = document.getElementById('search-input').value.trim();
+            
+            if (searchVal.length > 0) {
+                clearBtn.classList.remove('hidden');
+            } else {
+                clearBtn.classList.add('hidden');
+            }
+
+            applyFilters();
+        }
+
+        function clearSearch() {
+            document.getElementById('search-input').value = '';
+            document.getElementById('clear-search').classList.add('hidden');
+            applyFilters();
+            playBeep(350, 0.05);
+        }
+
+        function applyFilters() {
+            const query = document.getElementById('search-input').value.toLowerCase().trim();
+            const cards = document.querySelectorAll('.project-card');
+            const sections = document.querySelectorAll('.category-section');
+            const searchStatus = document.getElementById('search-status');
+            let visibleCount = 0;
+
+            cards.forEach(card => {
+                const keywords = card.dataset.keywords.toLowerCase();
+                const cardType = card.dataset.type;
+
+                const matchesSearch = query === '' || keywords.includes(query);
+                const matchesFilter = currentFilter === 'all' || 
+                                     (currentFilter === 'master' && cardType === 'master') || 
+                                     (currentFilter === 'teams' && cardType === 'teams');
+
+                if (matchesSearch && matchesFilter) {
+                    card.style.display = 'block';
+                    visibleCount++;
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+
+            // Toggle category section visibility depending on whether any child card is visible
+            sections.forEach(section => {
+                const visibleChildCards = section.querySelectorAll('.project-card[style*="display: block"]');
+                if (visibleChildCards.length === 0) {
+                    section.style.display = 'none';
+                } else {
+                    section.style.display = 'block';
+                }
+            });
+
+            // Toggle No Results card
+            const noResults = document.getElementById('no-results');
+            if (visibleCount === 0) {
+                noResults.classList.remove('hidden');
+            } else {
+                noResults.classList.add('hidden');
+            }
+
+            // Update status string
+            if (query !== '') {
+                searchStatus.textContent = `Found ${visibleCount} matching project(s) for "${query}"`;
+                searchStatus.classList.remove('hidden');
+            } else {
+                searchStatus.classList.add('hidden');
+            }
+        }
+    </script>
+</body>
+</html>
